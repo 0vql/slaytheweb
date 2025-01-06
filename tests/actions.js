@@ -5,7 +5,7 @@ import {createCard, CardTargets} from '../src/game/cards.js'
 import {MonsterRoom} from '../src/game/rooms.js'
 import {Monster} from '../src/game/monster.js'
 import {createTestDungeon} from '../src/content/dungeon-encounters.js'
-import {getTargets, getCurrRoom, isCurrRoomCompleted} from '../src/game/utils-state.js'
+import {getRoomTargets, getCurrRoom, isCurrRoomCompleted} from '../src/game/utils-state.js'
 import {canPlay} from '../src/game/conditions.js'
 
 const a = actions
@@ -107,12 +107,13 @@ test('recycling the discard pile is shuffled', (t) => {
 test('getTargets utility works', (t) => {
 	const {state} = t.context
 	let room = getCurrRoom(state)
-	t.deepEqual(getTargets(state, 'enemy0')[0], room.monsters[0])
+	t.deepEqual(getRoomTargets(state, 'enemy0')[0], room.monsters[0])
 	state.dungeon.y = 2
 	room = getCurrRoom(state)
-	t.deepEqual(getTargets(state, 'enemy1')[0], room.monsters[1])
-	t.throws(() => getTargets(state, 'doesntexist'))
-	t.deepEqual(getTargets(state, 'player')[0], state.player)
+	t.deepEqual(getRoomTargets(state, 'enemy1')[0], room.monsters[1])
+	t.throws(() => getRoomTargets(state, 'doesntexist'))
+	t.deepEqual(getRoomTargets(state, 'player')[0], state.player)
+	t.deepEqual(getRoomTargets(state, 'player0')[0], state.player)
 })
 
 test('can manipulate player hp', (t) => {
@@ -129,16 +130,16 @@ test('can manipulate player hp', (t) => {
 
 test('can manipulate monster hp', (t) => {
 	const {state} = t.context
-	t.is(getTargets(state, 'enemy0')[0].currentHealth, 42, 'og heath is ok')
+	t.is(getRoomTargets(state, 'enemy0')[0].currentHealth, 42, 'og heath is ok')
 
 	const state2 = a.removeHealth(state, {target: 'enemy0', amount: 10})
-	t.is(getTargets(state2, 'enemy0')[0].currentHealth, 32, 'can remove hp')
-	t.is(getTargets(state, 'enemy0')[0].currentHealth, 42, 'immutable')
+	t.is(getRoomTargets(state2, 'enemy0')[0].currentHealth, 32, 'can remove hp')
+	t.is(getRoomTargets(state, 'enemy0')[0].currentHealth, 42, 'immutable')
 
 	const state3 = a.removeHealth(state2, {target: 'enemy0', amount: 10})
-	t.is(getTargets(state3, 'enemy0')[0].currentHealth, 22, 'can remove hp')
-	t.is(getTargets(state2, 'enemy0')[0].currentHealth, 32, 'immutable')
-	t.is(getTargets(state, 'enemy0')[0].currentHealth, 42, 'immutable')
+	t.is(getRoomTargets(state3, 'enemy0')[0].currentHealth, 22, 'can remove hp')
+	t.is(getRoomTargets(state2, 'enemy0')[0].currentHealth, 32, 'immutable')
+	t.is(getRoomTargets(state, 'enemy0')[0].currentHealth, 42, 'immutable')
 })
 
 test('can not play a card without enough energy', (t) => {
@@ -151,32 +152,32 @@ test('can not play a card without enough energy', (t) => {
 
 test('initial rooms monster hp is STILL as expected', (t) => {
 	const {state} = t.context
-	t.is(getTargets(state, 'enemy0')[0].currentHealth, 42)
+	t.is(getRoomTargets(state, 'enemy0')[0].currentHealth, 42)
 	t.is(state.dungeon.graph[1][0].room.monsters[0].currentHealth, 42, 'this is the same')
 })
 
 test('can play a strike card from hand and see the effects on state', (t) => {
 	const {state} = t.context
-	const originalHealth = getTargets(state, 'enemy0')[0].currentHealth
-	t.is(getTargets(state, 'enemy0')[0].currentHealth, originalHealth)
+	const originalHealth = getRoomTargets(state, 'enemy0')[0].currentHealth
+	t.is(getRoomTargets(state, 'enemy0')[0].currentHealth, originalHealth)
 	const card = createCard('Strike')
 	const state2 = a.playCard(state, {target: 'enemy0', card})
-	t.is(getTargets(state, 'enemy0')[0].currentHealth, originalHealth)
-	t.is(getTargets(state2, 'enemy0')[0].currentHealth, originalHealth - card.damage)
+	t.is(getRoomTargets(state, 'enemy0')[0].currentHealth, originalHealth)
+	t.is(getRoomTargets(state2, 'enemy0')[0].currentHealth, originalHealth - card.damage)
 })
 
 test('weak makes you deal 25% less damage', (t) => {
 	let {state} = t.context
-	t.is(getTargets(state, 'enemy0')[0].currentHealth, 42)
+	t.is(getRoomTargets(state, 'enemy0')[0].currentHealth, 42)
 	const card = createCard('Strike')
 	let nextState = a.playCard(state, {target: 'enemy0', card})
-	t.is(getTargets(nextState, 'enemy0')[0].currentHealth, 36)
-	t.is(getTargets(nextState, 'player')[0].powers.weak, 0 || undefined)
+	t.is(getRoomTargets(nextState, 'enemy0')[0].currentHealth, 36)
+	t.is(getRoomTargets(nextState, 'player')[0].powers.weak, 0 || undefined)
 	nextState = a.setPower(nextState, {target: 'player', power: 'weak', amount: 1})
 	t.is(nextState.player.powers.weak, 1)
 	nextState = a.playCard(nextState, {target: 'enemy0', card})
 	t.is(
-		getTargets(nextState, 'enemy0')[0].currentHealth,
+		getRoomTargets(nextState, 'enemy0')[0].currentHealth,
 		32,
 		'weak is rounded down. 25% of 6 is 4.5, so we deal 4 damage',
 	)
@@ -184,33 +185,33 @@ test('weak makes you deal 25% less damage', (t) => {
 
 test('weak makes a monster deal 25% less damage', (t) => {
 	let {state} = t.context
-	t.is(getTargets(state, 'player')[0].currentHealth, 72)
+	t.is(getRoomTargets(state, 'player')[0].currentHealth, 72)
 
 	t.deepEqual(
-		getTargets(state, 'enemy0')[0].intents[1],
+		getRoomTargets(state, 'enemy0')[0].intents[1],
 		{damage: 10},
 		'second turn monster will deal 10 damage',
 	)
 
 	let nextState = a.endTurn(state)
 	nextState = a.setPower(nextState, {target: 'enemy0', power: 'weak', amount: 1})
-	t.is(getTargets(nextState, 'enemy0')[0].powers.weak, 1)
+	t.is(getRoomTargets(nextState, 'enemy0')[0].powers.weak, 1)
 
 	const finalTurn = a.endTurn(nextState)
-	t.is(getTargets(finalTurn, 'player')[0].currentHealth, 65)
+	t.is(getRoomTargets(finalTurn, 'player')[0].currentHealth, 65)
 })
 
 test('block on enemy actually blocks damage', (t) => {
 	const {state} = t.context
 	const card = createCard('Strike')
 
-	getTargets(state, 'enemy0')[0].block = 10
-	getTargets(state, 'enemy0')[0].currentHealth = 12
+	getRoomTargets(state, 'enemy0')[0].block = 10
+	getRoomTargets(state, 'enemy0')[0].currentHealth = 12
 	t.is(card.damage, 6)
 
 	const state2 = a.playCard(state, {target: 'enemy0', card})
-	t.is(getTargets(state2, 'enemy0')[0].block, 10 - 6, 'block was reduced')
-	t.is(getTargets(state2, 'enemy0')[0].currentHealth, 12, 'so hp wasnt removed')
+	t.is(getRoomTargets(state2, 'enemy0')[0].block, 10 - 6, 'block was reduced')
+	t.is(getRoomTargets(state2, 'enemy0')[0].currentHealth, 12, 'so hp wasnt removed')
 })
 
 test('block on player actually blocks damage', (t) => {
@@ -221,8 +222,8 @@ test('block on player actually blocks damage', (t) => {
 	t.is(state2.player.block, 5)
 
 	const state3 = a.endTurn(state2)
-	t.is(getTargets(state3, 'player')[0].block, 0, 'block was reduced')
-	t.is(getTargets(state3, 'player')[0].currentHealth, 72, 'so hp was not reduced')
+	t.is(getRoomTargets(state3, 'player')[0].block, 0, 'block was reduced')
+	t.is(getRoomTargets(state3, 'player')[0].currentHealth, 72, 'so hp was not reduced')
 })
 
 test('can play a defend card from hand and see the effects on state', (t) => {
@@ -329,20 +330,20 @@ test('Vulnerable targets take 50% more damage', (t) => {
 	let {state} = t.context
 	const bashCard = createCard('Bash')
 	const strikeCard = createCard('Strike')
-	t.is(getTargets(state, 'enemy0')[0].currentHealth, 42, 'initial hp')
+	t.is(getRoomTargets(state, 'enemy0')[0].currentHealth, 42, 'initial hp')
 	state = a.playCard(state, {target: 'enemy0', card: bashCard})
-	t.is(getTargets(state, 'enemy0')[0].currentHealth, 34)
+	t.is(getRoomTargets(state, 'enemy0')[0].currentHealth, 34)
 	state = a.playCard(state, {target: 'enemy0', card: strikeCard})
-	t.is(getTargets(state, 'enemy0')[0].currentHealth, 25, 'deals 50% more damage')
+	t.is(getRoomTargets(state, 'enemy0')[0].currentHealth, 25, 'deals 50% more damage')
 })
 
 test('Vulnerable damage is rounded down', (t) => {
 	let {state} = t.context
 	const strike = createCard('Strike')
 	strike.damage = 9
-	getTargets(state, 'enemy0')[0].powers.vulnerable = 1
+	getRoomTargets(state, 'enemy0')[0].powers.vulnerable = 1
 	let state2 = a.playCard(state, {target: 'enemy0', card: strike})
-	t.is(getTargets(state2, 'enemy0')[0].currentHealth, 42 - 13)
+	t.is(getRoomTargets(state2, 'enemy0')[0].currentHealth, 42 - 13)
 })
 
 test('Vulnerable power stacks', (t) => {
@@ -350,9 +351,9 @@ test('Vulnerable power stacks', (t) => {
 	const card = createCard('Bash')
 	state.player.currentEnergy = 999
 	state = a.playCard(state, {target: 'enemy0', card})
-	t.is(getTargets(state, 'enemy0')[0].powers.vulnerable, card.powers.vulnerable)
+	t.is(getRoomTargets(state, 'enemy0')[0].powers.vulnerable, card.powers.vulnerable)
 	state = a.playCard(state, {target: 'enemy0', card})
-	t.is(getTargets(state, 'enemy0')[0].powers.vulnerable, card.powers.vulnerable * 2)
+	t.is(getRoomTargets(state, 'enemy0')[0].powers.vulnerable, card.powers.vulnerable * 2)
 })
 
 test('Regen power stacks', (t) => {
@@ -371,12 +372,6 @@ test('Flourish card adds a healing "regen" buff', (t) => {
 	t.is(flourish.powers.regen, 5, 'card has regen power')
 	t.is(state.player.currentHealth, 72)
 	let state2 = a.playCard(state, {target: 'player', card: flourish})
-
-	// Pacify the monster...
-	// produce(state2, (draft) => {
-	// getCurrRoom(draft).monsters[0].intents = []
-	// getTargets(state, 'enemy0').intents = []
-	// })
 
 	t.is(state2.player.powers.regen, flourish.powers.regen, 'regen is applied to player')
 	state2 = a.endTurn(state2)
@@ -408,16 +403,13 @@ test('target "allEnemies" works for damage as well as power', (t) => {
 	t.is(room.monsters.length, 2, 'we have two enemies')
 	t.is(room.monsters[0].currentHealth, 24)
 	t.is(room.monsters[1].currentHealth, 13)
-	t.falsy(
-		room.monsters[0].powers.vulnerable && room.monsters[1].powers.vulnerable,
-		'none are vulnerable',
-	)
+	t.falsy(room.monsters[0].powers.vulnerable && room.monsters[1].powers.vulnerable, 'none are vulnerable')
 	const card = createCard('Thunderclap')
 	const nextState = a.playCard(state, {card})
-	t.is(getTargets(nextState, 'enemy0')[0].currentHealth, 24 - card.damage)
-	t.is(getTargets(nextState, 'enemy1')[0].currentHealth, 13 - card.damage)
-	t.is(getTargets(nextState, 'enemy0')[0].powers.vulnerable, 1)
-	t.is(getTargets(nextState, 'enemy1')[0].powers.vulnerable, 1)
+	t.is(getRoomTargets(nextState, 'enemy0')[0].currentHealth, 24 - card.damage)
+	t.is(getRoomTargets(nextState, 'enemy1')[0].currentHealth, 13 - card.damage)
+	t.is(getRoomTargets(nextState, 'enemy0')[0].powers.vulnerable, 1)
+	t.is(getRoomTargets(nextState, 'enemy1')[0].powers.vulnerable, 1)
 })
 
 test('add a reward card in the deck after winning a room', (t) => {
@@ -454,15 +446,20 @@ test('summer of sam card gains 1 life', (t) => {
 	const {state} = t.context
 	const card = createCard('Summer of Sam')
 	t.is(card.actions.length, 2, 'card has "actions"')
-	state.player.currentHealth = 50
-	const newState = a.playCard(state, {target: 'player', card})
-	t.is(newState.player.currentHealth, 51, 'gain 1 life')
+	t.is(state.player.maxHealth, 72)
+	const state2 = a.playCard(state, {target: 'player', card})
+	t.is(state2.player.currentHealth, 72, 'gain 1 life')
+
+	const test3 = a.removeHealth(state2, {target: 'player', amount: 72 / 2 + 5})
+	t.is(test3.player.currentHealth, 31)
+	const test4 = a.playCard(test3, {target: 'player', card})
+	t.is(test4.player.currentHealth, 33, 'gain 2 life, because hp was below 50%')
 })
 
 test('vulnerable is working', (t) => {
 	const {state} = t.context
 	state.player.powers.vulnerable = 1
-	getTargets(state, 'enemy0')[0].intents = [{damage: 10}]
+	getRoomTargets(state, 'enemy0')[0].intents = [{damage: 10}]
 	let newState = a.endTurn(state)
 	t.is(newState.player.currentHealth, 72 - 15)
 })
@@ -507,3 +504,13 @@ test('upgraded cards are really upgraded', (t) => {
 
 test.todo('playing defend on an enemy ?')
 test.todo('can apply a power to a specific monster')
+
+test('"Deal damage equal to block" mechanic works', (t) => {
+	const {state} = t.context
+	t.is(state.player.currentHealth, 72)
+	t.is(getRoomTargets(state, 'enemy0')[0].currentHealth, 42)
+	const state2 = a.playCard(state, {card: createCard('Defend'), target: 'player'})
+	t.is(state2.player.block, 5)
+	const state3 = a.playCard(state2, {card: createCard('Body Slam'), target: 'enemy0'})
+	t.is(getRoomTargets(state3, 'enemy0')[0].currentHealth, 42 - 5)
+})

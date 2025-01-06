@@ -1,6 +1,5 @@
 /* eslint-disable complexity */
 import {uuid, shuffle, random as randomBetween, pick} from '../utils.js'
-import {emojiFromNodeType} from '../ui/components/map.js'
 import {easyMonsters, monsters, elites, bosses} from '../content/dungeon-encounters.js'
 import {StartRoom, CampfireRoom} from './rooms.js'
 
@@ -43,7 +42,7 @@ import {StartRoom, CampfireRoom} from './rooms.js'
  */
 
 /** @type {GraphOptions} */
-const defaultOptions = {
+export const defaultOptions = {
 	width: 10,
 	height: 6,
 	minRooms: 2,
@@ -57,9 +56,9 @@ const defaultOptions = {
  * @prop {string} id a unique id
  * @prop {Graph} graph
  * @prop {Array<Path>} paths
- * @prop {number} x current x position
- * @prop {number} y current y position
- * @prop {Array<Position>} pathTaken a list of moves we've taken
+ * @prop {number} x current x position (which path)
+ * @prop {number} y current y position (where on the path)
+ * @prop {Array<Move>} pathTaken a list of moves we've taken
  */
 
 /**
@@ -88,7 +87,7 @@ export default function Dungeon(options) {
 		paths,
 		x: 0,
 		y: 0,
-		pathTaken: [{x: 0, y: 0}],
+		pathTaken: [[0, 0]],
 	}
 }
 
@@ -148,7 +147,7 @@ export function generateGraph(options) {
 /**
  * Returns an array of possible paths from start to finish.
  * @param {Graph} graph - dungeon graph
- * @param {string} customPaths
+ * @param {string} [customPaths]
  * @returns {Array<Path>} customPaths a list of paths
  */
 export function generatePaths(graph, customPaths) {
@@ -294,6 +293,15 @@ function storePathOnGraph(graph, path) {
 	path.forEach((move) => {
 		const a = nodeFromMove(graph, move[0])
 		const b = nodeFromMove(graph, move[1])
+
+		// @todo refactor so we don't have to do this. Depending on how the dungeon (and graph) was generated, the edges might not be set.
+		if (typeof a.edges?.has !== 'function') {
+			a.edges = new Set()
+		}
+		if (typeof b.edges?.has !== 'function') {
+			b.edges = new Set()
+		}
+
 		a.edges.add(b.id)
 	})
 	return graph
@@ -345,6 +353,17 @@ function decideNodeType(nodeTypes, floor) {
 	if (floor < 3) return pick('MC')
 	if (floor > 6) return pick('MMEEC')
 	return pick(nodeTypes)
+}
+
+/**
+ * Converts the string type of a node to an emoji string.
+ * if node type is supplied it'll use ' ' whitespace as type
+ * @param {string} [type] - a string key to represent the type of room
+ * @returns {string} a single emoji
+ */
+export function emojiFromNodeType(type) {
+	if (!type) return ' '
+	return MapNodeTypes[type]
 }
 
 /**

@@ -1,8 +1,6 @@
 import {uuid} from '../utils.js'
 import {cards, cardUpgrades} from '../content/cards.js'
 
-// console.log(cardUpgrades)
-
 // This file contains the logic to create cards.
 // While cards are described in plain object form, they are always converted to a class equivalent.
 // The actual cards belong in content/cards.js.
@@ -66,15 +64,15 @@ export class Card {
 		this.type = CardTypes[props.type]
 		this.energy = props.energy
 		this.target = CardTargets[props.target]
-		this.damage = props.damage
-		this.block = props.block
+		this.damage = props.damage || 0
+		this.block = props.block || 0
 		this.powers = props.powers
 		this.description = props.description
 		this.conditions = props.conditions
 		this.actions = props.actions
 		this.image = props.image
-		this.upgraded = props.upgraded
-		this.exhaust = props.exhaust
+		this.upgraded = props.upgraded || false
+		this.exhaust = props.exhaust || false
 	}
 }
 
@@ -84,11 +82,17 @@ export class Card {
  * We do this so we can define the cards without using class syntax.
  * @param {string} name - exact name of the Card
  * @param {boolean} [shouldUpgrade] - whether to upgrade the card
- * @returns {CARD}
+ * @returns {CARD} a new card
  */
 export function createCard(name, shouldUpgrade) {
+	// This is a bit wacky, but it allows us to upgrade cards by their original name.
+	if (name.includes('+')) {
+		return createCard(upgradeNameMap[name], true)
+	}
+
 	let card = cards.find((card) => card.name === name)
 	if (!card) throw new Error(`Card not found: ${name}`)
+
 	if (shouldUpgrade) {
 		const upgradeFn = cardUpgrades[name]
 		card = upgradeFn(card)
@@ -100,6 +104,19 @@ export function createCard(name, shouldUpgrade) {
 	}
 	return new Card(card)
 }
+
+const upgradeNameMap = {}
+
+// Build the map automatically from cards and their upgrade functions
+cards.forEach((card) => {
+	const upgradeFn = cardUpgrades[card.name]
+	if (upgradeFn) {
+		const upgradedCard = upgradeFn(card)
+		if (upgradedCard.name !== card.name + '+') {
+			upgradeNameMap[upgradedCard.name] = card.name
+		}
+	}
+})
 
 /**
  * Returns X random cards from a list of cards.
@@ -122,13 +139,11 @@ export function getRandomCards(list, amount) {
 /**
  * Returns X random, nicer and unique cards.
  * @param {number} [amount]
- * @returns {Array.<CARD>}
+ * @returns {Array.<CARD>} a list of cards
  */
 export function getCardRewards(amount = 3) {
 	// Remove boring cards from rewards.
-	const niceCards = cards
-		.filter((card) => card.name !== 'Strike')
-		.filter((card) => card.name !== 'Defend')
+	const niceCards = cards.filter((card) => card.name !== 'Strike').filter((card) => card.name !== 'Defend')
 	// List of random card rewards.
 	const rewards = []
 	while (rewards.length < amount) {

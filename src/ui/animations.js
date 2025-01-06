@@ -1,16 +1,12 @@
 import gsap from 'gsap'
-import {Draggable} from 'gsap/Draggable.js'
+import Draggable from 'gsap/Draggable.js'
 import Flip from 'gsap/Flip.js'
 
 // This file contains some resuable animations/effects.
 // https://greensock.com/cheatsheet/
 
 // Don't forget to register plugins.
-gsap.registerPlugin(Draggable)
-
-if (typeof Flip !== 'undefined') {
-	gsap.registerPlugin(Flip)
-}
+gsap.registerPlugin(Draggable, Flip)
 
 // Fly in the cards from the left (draw pile) to your hand.
 gsap.registerEffect({
@@ -74,23 +70,39 @@ gsap.registerEffect({
 		const tl = gsap.timeline()
 		return tl
 			.to(targets, {
-				duration: 0.6,
-				y: '-=100',
-				// x: 0,
+				duration: 1.5,
+				y: '-=80',
 				rotation: 50,
 				scale: 0.8,
 				ease: 'power3.out',
-				onComplete: config.onComplete,
 			})
 			.to(targets, {
-				delay: -0.3,
+				delay: -1.3,
 				duration: 0.8,
 				scale: 0.5,
-				rotation: 90,
-				x: window.innerWidth,
+				rotation: 80,
+				x: window.innerWidth * 1.2,
 				y: window.innerHeight,
 				ease: 'power3.inOut',
+				onComplete: config.onComplete,
 			})
+	},
+})
+
+// This throws the card out towards the discard pile in the bottom right corner.
+gsap.registerEffect({
+	name: 'addCardToDeck',
+	effect: (targets, config) => {
+		const tl = gsap.timeline()
+		return tl.to(targets, {
+			duration: 1,
+			x: '+=80',
+			y: '-=80',
+			rotation: 50,
+			scale: 0.4,
+			ease: 'power3.out',
+			onComplete: config.onComplete,
+		})
 	},
 })
 

@@ -1,8 +1,10 @@
 # Documentation for Slay the Web
 
-Throughout the project I've attempted to document and leave comments. So please, go ahead and explore all folders and files. In the root of this project you'll find configuration files as well as two folders:
+Throughout the project I've attempted to document and leave comments. Go ahead and explore all folders and files.
 
-- [src →](src/) The web root. All code is transpiled.
+In the root of this project you'll find configuration files as well as three folders:
+
+- [src →](src/) The web root. 
   - [game](src/game) contains the core game logic
   - [content](src/content) uses methods from the game engine to build cards, dungeon and monsters
   - [ui](src/ui) is the example web interface to actually play the game
@@ -63,6 +65,8 @@ On `state.player` we have you, the player. This object describes the health, pow
 Every game evolves around and in a dungeon. A dungeon consists of a graph (think a 2d array with rows and columns, or positions and nodes, or floors and rooms).
 There are different types of rooms. Like Monster and Campfire. One day there'll be more like Merchant and Treasure or a "random" room.
 
+To be able to navigate a dungeon, we have the concept of a `Map`. It takes a `Dungeon` and renders the UI. Check https://slaytheweb.cards/map-demo.html. I'm biased but it's kind of cool.
+
 #### Monsters
 
 Monsters exist inside the rooms in a dungeon. A monster has health and a list of "intents" that it will take each turn. These intents are basically the AI. Monsters can do damage, block and apply powers. It's not super flexible, as we're not using actions and cards like the player does. But it is enough for now.
@@ -115,9 +119,7 @@ You can also just run ava directly and do as you please. Example: `npm test test
 
 ## Backend
 
-With the integration of https://github.com/oskarrough/slaytheweb-backend in `game/backend.js`, you can choose to save your current run state in the Slay the Web database. Nothing but game state is stored. All runs are listed on `stats.html`.
-
-To save a run, open the browser console and run `stw.postRun()`.
+With the integration of https://github.com/oskarrough/slaytheweb-backend in `game/backend.js`, you can choose to save your current run state in the Slay the Web database. Nothing but game state & date is stored. All runs are visible on `stats.html`.
 
 ## Footnotes
 

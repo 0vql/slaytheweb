@@ -77,7 +77,7 @@ export function pick(list) {
 /**
  * A queue is a list of objects that are inserted and removed first-in-first-out (FIFO).
  */
-export default class Queue {
+export class Queue {
 	constructor(items = []) {
 		this.list = items
 	}
@@ -89,4 +89,64 @@ export default class Queue {
 	dequeue() {
 		return this.list.shift()
 	}
+}
+
+/**
+ * @param {Function} func
+ * @param {number} delay
+ * @returns {function}
+ */
+export function throttle(func, delay) {
+  let lastCall = 0
+  return function (...args) {
+    const now = new Date().getTime()
+    if (now - lastCall < delay) return
+    lastCall = now
+    return func(...args)
+  }
+}
+
+/**
+ * @param {Function} func
+ * @param {number} wait
+ * @param {object} options
+ * @prop {boolean} options.leading
+ * @prop {boolean} options.trailing
+ * @returns {function}
+ */
+export function debounce(func, wait, options = {}) {
+  let timeout
+  return function executedFunction(...args) {
+    const context = this
+    const later = function() {
+      timeout = null
+      if (options.trailing) func.apply(context, args)
+    }
+    const callNow = options.leading && !timeout
+    clearTimeout(timeout)
+    timeout = setTimeout(later, wait)
+    if (callNow) func.apply(context, args)
+  }
+}
+
+/** Turns a timestamp into a string like "16. Dec 2024" */
+export function formatDate(timestamp) {
+	return new Intl.DateTimeFormat('en', {
+		dateStyle: 'medium',
+		// month: 'short',
+		// timeStyle: 'short',
+		hour12: false,
+	}).format(new Date(timestamp))
+}
+
+/** Turns a timestamp into a "X days ago" string */
+export function timeSince(timestamp) {
+	const seconds = Math.floor((Date.now() - timestamp) / 1000)
+	if (seconds < 60) return 'just now'
+	if (seconds < 120) return 'a minute ago'
+	if (seconds < 3600) return `${Math.floor(seconds / 60)} minutes ago`
+	if (seconds < 7200) return 'an hour ago'
+	if (seconds < 86400) return `${Math.floor(seconds / 3600)} hours ago`
+	if (seconds < 172800) return 'yesterday'
+	return `${Math.floor(seconds / 86400)} days ago`
 }

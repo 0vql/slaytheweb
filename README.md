@@ -1,26 +1,57 @@
 # Slay the Web
 
-Slay the Web is a digital card game for the web based on Slay The Spire, a fantastic video game designed by [MegaCrit](https://www.megacrit.com/). They say:
+A digital, single player deckbuilding roguelike card game for the web based on Slay The Spire,  
+a fantastic video game designed by [MegaCrit](https://www.megacrit.com/).
 
-> We fused card games and roguelikes together to make the best single player deckbuilder we could. Craft a unique deck, encounter bizarre creatures, discover relics of immense power, and Slay the Spire!
 
-# 🎴 [Play on slaytheweb.cards](https://slaytheweb.cards/) 
-
-Come chat on https://matrix.to/#/#slaytheweb:matrix.org
+### [Play on slaytheweb.cards](https://slaytheweb.cards/) 
+### [Chat on #slaytheweb:matrix.org](https://matrix.to/#/#slaytheweb:matrix.org)
 
 <a href="https://slaytheweb.cards"><img src="https://i.imgur.com/m9CRCsa.png" alt="Screenshot of Slay the Web" width="640"></a>
 
 After many runs in the Spire, I got into the theory behind the game. Inspired by the STS modding community, I thought it'd be fun and a great learning experience to try and implement the core logic of the game in JavaScript for the web. And that is what _Slay the Web_ is: a kind of stable, UI agnostic game engine with an example UI for the web.
 
+## State of the game
+
+December 2023. The core mechanics seem to work. There is a [dynamic map](https://slaytheweb.cards/map-demo) you can navigate with different rooms and monsters. You can fight against them using your cards and their powers.
+
+There are many things that would make it more fun to play:
+
+- new cards
+- new powers
+- more monsters
+- expand the map into multiple "worlds" (or acts...)
+- better UI and animations
+- optimize UI for mobile
+
+See the [open issues](https://github.com/oskarrough/slaytheweb/issues). Have an idea? Please [open a new issue](https://github.com/oskarrough/slaytheweb/issues/new).
+
 ## Documentation
 
-If you're interested in contributing to the game or merely curious how it works, see [the documentation](DOCUMENTATION.md).
+If you're interested in contributing to the game or merely curious how it works:
 
-TLDR; Clone the repository and run `npm install` followed by `npm run dev` to open a local development server. The `src/game` folder contains the actual game logic and the `src/ui` folder is the website UI where you can actually play the game. The `src/content` folder builds content for the game.
+- [The documentation](DOCUMENTATION.md)
 
-## How to deploy it
+Or browse the code. Especially the game logic includes tons of comments (written in JSDoc).
 
-The `main` branch automatically deploys to https://slaytheweb.cards, via the Vercel service. If you open a PR, it'll give you a preview URL as well for testing.
+## Development
+
+TLDR;
+
+1. Clone the repository
+2. Run `npm install` followed by `npm run dev` to open a local development server.
+
+The `src/game` folder contains the actual game logic.  
+The `src/ui` folder is the website UI where you can actually play the game.  
+The `src/content` folder builds content for the game.
+
+## How to release a new version (aka deploy)
+
+Every commit to the  `main` branch automatically deploys to https://slaytheweb.cards via the Vercel service.  
+
+If you open a PR, it'll give you a preview URL as well for testing.
+
+To update `CHANGELOG.md`, run `bunx release-it` and follow the prompts. We do not use GitHub releases.
 
 ## References
 

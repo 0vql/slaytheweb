@@ -31,11 +31,11 @@ export function PublishRun({game}) {
 				? html`
 						<label
 							>Want to post your run to the public, Slay the Web highscores?<br />
-							<input type="text" name="playername" required placeholder="Know thyself" />
+							<input type="text" name="playername" maxlength="140" required placeholder="Know thyself" />
 						</label>
 						<button disabled=${loading} type="submit">Submit my run</button>
-						<p>${loading ? 'submitting' : ''}</p>
-						<p><a href="/stats.html">View highscores</a></p>
+						<p>${loading ? 'Submitting…' : ''}</p>
+						<p><a href="/stats">View highscores</a></p>
 				  `
 				: html`<p>Thank you.</p>`}
 		</form>

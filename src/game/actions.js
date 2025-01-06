@@ -1,10 +1,13 @@
-import {produce} from 'immer'
+import {produce, enableMapSet} from 'immer'
 import {clamp, shuffle} from '../utils.js'
-import {isDungeonCompleted, getTargets, getCurrRoom} from './utils-state.js'
+import {isDungeonCompleted, getRoomTargets, getCurrRoom} from './utils-state.js'
 import powers from './powers.js'
 import {conditionsAreValid} from './conditions.js'
 import {createCard, CardTargets} from './cards.js'
 import {dungeonWithMap} from '../content/dungeon-encounters.js'
+
+// Enable support for Map and Set. See https://immerjs.github.io/immer/installation/
+enableMapSet()
 
 /** @typedef {import('./dungeon.js').Dungeon} Dungeon */
 /** @typedef {import('./cards.js').CARD} CARD */
@@ -47,8 +50,8 @@ import {dungeonWithMap} from '../content/dungeon-encounters.js'
  */
 
 /**
- * This is the big object of game state. Everything starts here.
- * @returns {State}
+ * Everything starts here.
+ * @returns {State} the big game state object
  */
 function createNewState() {
 	return {
@@ -77,7 +80,7 @@ function createNewState() {
  * By default a new game doesn't come with a dungeon. You have to set one explicitly. Look in dungeon-encounters.js for inspiration.
  * @param {State} state
  * @param {Dungeon} [dungeon]
- * @returns {State}
+ * @returns {State} .
  */
 function setDungeon(state, dungeon) {
 	if (!dungeon) dungeon = dungeonWithMap()
@@ -91,7 +94,7 @@ function setDungeon(state, dungeon) {
 /**
  * Draws a "starter" deck to your discard pile. Normally you'd run this as you start the game.
  * @param {State} state
- * @returns {State}
+ * @returns {State} .
  */
 function addStarterDeck(state) {
 	const deck = [
@@ -206,11 +209,10 @@ function upgradeCard(state, {card}) {
  * @type {ActionFn<{card: object, target?: string}>}
  */
 function playCard(state, {card, target}) {
-	if (!target) target = card.target
-	if (typeof target !== 'string')
-		throw new Error(`Wrong target to play card: ${target},${card.target}`)
-	if (target === 'enemy') throw new Error('Wrong target, did you mean "enemy0" or "allEnemies"?')
 	if (!card) throw new Error('No card to play')
+	if (!target) target = card.target
+	if (typeof target !== 'string') throw new Error(`Wrong target to play card: ${target},${card.target}`)
+	if (target === 'enemy') throw new Error('Wrong target, did you mean "enemy0" or "allEnemies"?')
 	if (state.player.currentEnergy < card.energy) throw new Error('Not enough energy to play card')
 	let newState = discardCard(state, {card})
 	newState = produce(newState, (draft) => {
@@ -248,21 +250,24 @@ function playCard(state, {card, target}) {
  */
 export function useCardActions(state, {target, card}) {
 	if (!card.actions) return state
-	let newState = state
+
+	let nextState = state
+
 	card.actions.forEach((action) => {
 		// Don't run action if it has an invalid condition.
 		if (action.conditions && !conditionsAreValid(state, action.conditions)) {
-			return newState
+			return
 		}
-		if (!action.parameter) action.parameter = {}
 
 		// Make sure the action is called with a target, preferably the target you dropped the card on.
+		if (!action.parameter) action.parameter = {}
 		action.parameter.target = target
 
 		// Run the action (and add the `card` to the parameters
-		newState = allActions[action.type](newState, {...action.parameter, card})
+		nextState = allActions[action.type](nextState, {...action.parameter, card})
 	})
-	return newState
+
+	return nextState
 }
 
 /**
@@ -271,7 +276,7 @@ export function useCardActions(state, {target, card}) {
  */
 function addHealth(state, {target, amount}) {
 	return produce(state, (draft) => {
-		const targets = getTargets(draft, target)
+		const targets = getRoomTargets(draft, target)
 		targets.forEach((t) => {
 			t.currentHealth = clamp(t.currentHealth + amount, 0, t.maxHealth)
 		})
@@ -319,9 +324,9 @@ function addEnergyToPlayer(state, props) {
  * Removes health from a target, respecting vulnerable and block.
  * @type {ActionFn<{target: string, amount: number}>}
  */
-const removeHealth = (state, {target, amount}) => {
+const removeHealth = (state, {target, amount = 0}) => {
 	return produce(state, (draft) => {
-		getTargets(draft, target).forEach((t) => {
+		getRoomTargets(draft, target).forEach((t) => {
 			if (t.powers.vulnerable) amount = powers.vulnerable.use(amount)
 			let amountAfterBlock = t.block - amount
 			if (amountAfterBlock < 0) {
@@ -343,7 +348,7 @@ const removeHealth = (state, {target, amount}) => {
  */
 const setHealth = (state, {target, amount}) => {
 	return produce(state, (draft) => {
-		getTargets(draft, target).forEach((t) => {
+		getRoomTargets(draft, target).forEach((t) => {
 			t.currentHealth = amount
 		})
 	})
@@ -565,7 +570,7 @@ function move(state, {move}) {
 		draft.player.currentEnergy = 3
 		draft.player.block = 0
 		draft.dungeon.graph[move.y][move.x].didVisit = true
-		draft.dungeon.pathTaken.push({x: move.x, y: move.y})
+		draft.dungeon.pathTaken.push([move.x, move.y])
 		draft.dungeon.x = move.x
 		draft.dungeon.y = move.y
 		// if (number === state.dungeon.rooms.length - 1) {
@@ -591,7 +596,7 @@ function dealDamageEqualToBlock(state, {target}) {
  */
 function dealDamageEqualToVulnerable(state, {target}) {
 	return produce(state, (draft) => {
-		getTargets(draft, target).forEach((t) => {
+		getRoomTargets(draft, target).forEach((t) => {
 			if (t.powers.vulnerable) {
 				const amount = t.currentHealth - t.powers.vulnerable
 				t.currentHealth = amount
@@ -607,7 +612,7 @@ function dealDamageEqualToVulnerable(state, {target}) {
  */
 function dealDamageEqualToWeak(state, {target}) {
 	return produce(state, (draft) => {
-		getTargets(draft, target).forEach((t) => {
+		getRoomTargets(draft, target).forEach((t) => {
 			if (t.powers.weak) {
 				const amount = t.currentHealth - t.powers.weak
 				t.currentHealth = amount
@@ -623,7 +628,7 @@ function dealDamageEqualToWeak(state, {target}) {
  */
 function setPower(state, {target, power, amount}) {
 	return produce(state, (draft) => {
-		getTargets(draft, target).forEach((target) => {
+		getRoomTargets(draft, target).forEach((target) => {
 			target.powers[power] = amount
 		})
 	})

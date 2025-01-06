@@ -1,6 +1,7 @@
-import {html} from '../lib.js'
+import {html, useState} from '../lib.js'
 import History from './history.js'
 import {saveToUrl} from '../save-load.js'
+import {toggleMute} from '../sounds.js'
 
 // @ts-ignore
 const abandonGame = () => (window.location.href = window.location.origin)
@@ -17,45 +18,36 @@ const abandonGame = () => (window.location.href = window.location.origin)
  * @returns {import('preact').VNode}
  */
 export default function Menu({game, gameState, onUndo}) {
+	const [muted, setMuted] = useState(false)
+
+	function toggleSound() {
+		toggleMute(!muted)
+		setMuted(!muted)
+	}
+
 	return html`
 		<div class="Container">
-			<h1>Slay the Web</h1>
-			<h2>Menu</p>
+			<h1 center>Slay the Web</h1>
+			<br/>
+			<br/>
 			<div class="Box">
 				<ul class="Options">
 					<li>
 						<button
-							onclick=${() => saveToUrl(gameState)}
+							onClick=${() => saveToUrl(gameState)}
 							title="Your save game will be stored in the URL. Copy it"
 						>
 							Save
 						</button>
 					</li>
 					<li>
-						<button onclick=${() => abandonGame()}>Abandon Game</button>
+						<button onClick=${() => abandonGame()}>Abandon Game</button>
 					</li>
+					<li><label>Sound <input type="checkbox" checked=${!muted} onClick=${() => toggleSound()}/></label></li>
 				</ul>
 			</div>
 
-			<${History} future=${game.future.list} past=${game.past.list} />
-
-			${
-				game.past.list.length &&
-				html`<p>
-					<button onclick=${() => onUndo()}>
-						<u>U</u>
-						ndo
-					</button>
-
-					<br />
-				</p>`
-			}
-
-			<p style="margin-top:auto">
-				<a rel="noreferrer" target="_blank" href="https://github.com/oskarrough/slaytheweb"
-					>View source</a
-				>
-			</p>
+			<${History} future=${game.future.list} past=${game.past.list} onUndo=${onUndo} />
 		</div>
 	`
 }

@@ -40,23 +40,27 @@ export function getCurrRoom(state) {
 }
 
 /**
- * Returns an array of targets (player or monsters) in the current room.
+ * Returns a list of "targets" (player or monsters) in the current room. 
  * @param {State} state
- * @param {CardTargets} targetQuery
+ * @param {CardTargets} targetQuery - like player, enemy0, enemy1, enemy2, allEnemies
  * @returns {Array<MONSTER>}
  */
-export function getTargets(state, targetQuery) {
-	if (!targetQuery || typeof targetQuery !== 'string') {
-		throw new Error('Bad query string')
-	}
-	if (targetQuery === CardTargets.player) return [state.player]
-	const room = getCurrRoom(state)
-	if (targetQuery === CardTargets.allEnemies) return room.monsters
+export function getRoomTargets(state, targetQuery) {
+	if (!targetQuery || typeof targetQuery !== 'string') throw new Error('Bad query string')
+
+	// Player
+	if (targetQuery.includes(CardTargets.player)) return [state.player]
+
+	// All enemies
+	if (targetQuery === CardTargets.allEnemies) return getCurrRoom(state).monsters
+
+	// Single enemy
 	if (targetQuery.startsWith(CardTargets.enemy)) {
 		const index = Number(targetQuery.split('enemy')[1])
-		const monster = room.monsters[index]
+		const monster = getCurrRoom(state).monsters[index]
 		if (monster) return [monster]
 	}
+
 	throw new Error(`Could not find target "${targetQuery}" on ${state.dungeon.y}/${state.dungeon.x}`)
 }
 
@@ -73,6 +77,17 @@ export function cardHasValidTarget(cardTarget, targetQuery) {
 		(cardTarget === 'allEnemies' && targetQuery.includes('enemy'))
 	)
 }
+
+/**
+ * Can't even begin to explain this one. Needs refactor.
+ * @param {HTMLElement} el
+ * @returns {string}
+ */
+export function getTargetStringFromElement(el) {
+	const targetIndex = Array.from(el.parentNode.children).indexOf(el)
+	return el.dataset.type + targetIndex
+}
+
 
 /**
  * @param {Room} room
