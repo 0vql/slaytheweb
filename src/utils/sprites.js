@@ -417,4 +417,4 @@ export function getSpriteStyle(rowOrCoords, col, spritesheet = 'monsters', scale
 }
 
 // Export sprite arrays for external use
-export {monsterSprites, animalSprites, rogueSprites, itemSprites, tileSprites}
+export {animalSprites, itemSprites, monsterSprites, rogueSprites, tileSprites}

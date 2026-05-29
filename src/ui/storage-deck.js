@@ -21,7 +21,7 @@ export function getCustomDecks() {
  * @returns {Deck[]} Updated array of all custom decks
  */
 export function saveDeck(deck) {
-	if (!deck.cards || !deck.cards.length) {
+	if (!deck.cards?.length) {
 		throw new Error('Cannot save deck without cards')
 	}
 

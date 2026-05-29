@@ -187,7 +187,7 @@ export default class DebugUI extends Component {
 
 	renderRoomEditor() {
 		const {game} = this.state
-		if (!game || !game.state) return null
+		if (!game?.state) return null
 
 		const currentRoom = getCurrRoom(game.state)
 

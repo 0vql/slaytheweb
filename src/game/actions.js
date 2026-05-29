@@ -664,7 +664,7 @@ function iddqd(state) {
 	return produce(state, (draft) => {
 		draft.dungeon.graph.forEach((floor) => {
 			floor.forEach((node) => {
-				if (!node.room || !node.room.monsters) return
+				if (!node.room?.monsters) return
 				node.room.monsters.forEach((monster) => {
 					monster.currentHealth = 1
 				})
